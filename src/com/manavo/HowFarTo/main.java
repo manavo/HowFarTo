@@ -2,8 +2,6 @@ package com.manavo.HowFarTo;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -43,12 +41,8 @@ public class main extends MapActivity {
         this.mapView.setBuiltInZoomControls(true);
         
         mapOverlays = mapView.getOverlays();
-        drawable = this.getResources().getDrawable(R.drawable.icon);
+        drawable = this.getResources().getDrawable(R.drawable.marker);
         itemizedoverlay = new hftOverlay(drawable, this);
-/*        
-        GeoPoint point2 = new GeoPoint(35410000, 139460000);
-        OverlayItem overlayitem2 = new OverlayItem(point2, "Sekai, konichiwa!", "I'm in Japan!");
-        itemizedoverlay.addOverlay(overlayitem2);*/
     }
     
     @Override

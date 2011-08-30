@@ -7,11 +7,15 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -43,6 +47,28 @@ public class main extends MapActivity {
         mapOverlays = mapView.getOverlays();
         drawable = this.getResources().getDrawable(R.drawable.marker);
         itemizedoverlay = new hftOverlay(drawable, this);
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+        case R.id.about:
+            this.startActivity(new Intent(this, About.class));
+            return true;
+        case R.id.exit:
+            this.finish();
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
     }
     
     @Override

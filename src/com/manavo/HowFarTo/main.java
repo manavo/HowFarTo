@@ -18,22 +18,29 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
+import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
 public class main extends MapActivity {
 	private MapView mapView;
+	private TextView distance;
 	
 	private List<Overlay> mapOverlays;
-	private Drawable drawable;
 	private hftOverlay itemizedoverlay;
 	
 	private List<Address> addresses;
+	
+	private MyLocationOverlay myLocationOverlay;
+	
+	private Address location;
+	private GeoPoint locationPoint;
 	
     /** Called when the activity is first created. */
     @Override
@@ -41,12 +48,41 @@ public class main extends MapActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
+        this.distance = (TextView)this.findViewById(R.id.distance);
+        
         this.mapView = (MapView)this.findViewById(R.id.mapview);
         this.mapView.setBuiltInZoomControls(true);
         
-        mapOverlays = mapView.getOverlays();
-        drawable = this.getResources().getDrawable(R.drawable.marker);
-        itemizedoverlay = new hftOverlay(drawable, this);
+        this.mapOverlays = mapView.getOverlays();
+        Drawable drawable = this.getResources().getDrawable(R.drawable.marker);
+        this.itemizedoverlay = new hftOverlay(drawable, this);
+        
+        this.myLocationOverlay = new MyLocationOverlay(this, this.mapView);
+		this.myLocationOverlay.enableMyLocation();
+		this.myLocationOverlay.runOnFirstFix(new Runnable() {
+			public void run() {
+				main.this.showDistance();
+				main.this.mapView.getController().animateTo(main.this.myLocationOverlay.getMyLocation());
+			}
+		});
+		
+        this.addMyLocation();
+    }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+    	this.myLocationOverlay.enableMyLocation();
+    }
+    
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	this.myLocationOverlay.disableMyLocation();
+    }
+    
+    private void addMyLocation() {
+		this.mapOverlays.add(this.myLocationOverlay);
     }
     
     @Override
@@ -70,6 +106,20 @@ public class main extends MapActivity {
             return super.onOptionsItemSelected(item);
         }
     }
+
+    // Calculate distance between 2 points in Kilometers
+    // Based on the haversine formula from here: http://www.movable-type.co.uk/scripts/latlong.html
+    private double calculateDistance(GeoPoint p1, GeoPoint p2) {
+    	double lat1 = p1.getLatitudeE6()/1E6;
+    	double lon1 = p1.getLongitudeE6()/1E6;
+    	double lat2 = p2.getLatitudeE6()/1E6;
+    	double lon2 = p2.getLongitudeE6()/1E6;
+    	
+    	double R = 6371; // km
+    	double d = Math.acos(Math.sin(lat1)*Math.sin(lat2) + Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1)) * R;
+    	
+    	return d;
+    }
     
     @Override
     protected boolean isRouteDisplayed() {
@@ -77,20 +127,38 @@ public class main extends MapActivity {
     }
     
     public void showAddress(Address address) {
+    	this.location = address;
+    	
     	Integer lat = new Double(address.getLatitude()*1E6).intValue();
 		Integer lng = new Double(address.getLongitude()*1E6).intValue();
 		
-		mapOverlays.clear();
+		this.mapOverlays.clear();
+        this.addMyLocation();
         
-        GeoPoint point = new GeoPoint(lat, lng);
-        OverlayItem overlayitem = new OverlayItem(point, "Hello!", "I'm in "+address.getAddressLine(0)+"!");
+        this.locationPoint = new GeoPoint(lat, lng);
+        OverlayItem overlayitem = new OverlayItem(this.locationPoint, "Hello!", "I'm in "+address.getAddressLine(0)+"!");
         
-        itemizedoverlay.clear();
-        itemizedoverlay.addOverlay(overlayitem);
+        this.itemizedoverlay.clear();
+        this.itemizedoverlay.addOverlay(overlayitem);
 
-        mapOverlays.add(itemizedoverlay);
+        this.mapOverlays.add(this.itemizedoverlay);
         
-		mapView.invalidate();
+		this.mapView.invalidate();
+		
+		this.showDistance();
+    }
+    
+    private void showDistance() {
+    	GeoPoint myLocation = this.myLocationOverlay.getMyLocation();
+    	if (myLocation == null) {
+    		Toast.makeText(this, "Waiting for your location", Toast.LENGTH_LONG).show();
+    	} else if (this.location == null) {
+    		// Do nothing, we got our location but haven't searched for anything yet
+    	} else {
+        	Double distance = this.calculateDistance(myLocation, this.locationPoint);
+        	this.distance.setText("About " + new Integer(Math.round(Math.round(distance))).toString() + "km to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode()); 
+        	this.distance.setVisibility(View.VISIBLE);
+    	}
     }
     
     public void searchLocation(View v) {
@@ -101,14 +169,14 @@ public class main extends MapActivity {
     	
     	Geocoder g = new Geocoder(this);
     	try {
-			addresses = g.getFromLocationName(sLocation, 5);
+			this.addresses = g.getFromLocationName(sLocation, 5);
 			
-			if (addresses.size() == 1) {
-				showAddress(addresses.get(0));
-			} else if (addresses.size() == 0) {
+			if (this.addresses.size() == 1) {
+				showAddress(this.addresses.get(0));
+			} else if (this.addresses.size() == 0) {
 				Toast.makeText(this, "Nothing found!", Toast.LENGTH_LONG).show();
 			} else {
-				Iterator<Address> i = addresses.iterator();
+				Iterator<Address> i = this.addresses.iterator();
 				Address a;
 				
 				ArrayList<String> options = new ArrayList<String>();

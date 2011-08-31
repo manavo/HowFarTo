@@ -13,6 +13,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -116,7 +117,16 @@ public class main extends MapActivity {
     	double lon2 = p2.getLongitudeE6()/1E6;
     	
     	double R = 6371; // km
-    	double d = Math.acos(Math.sin(lat1)*Math.sin(lat2) + Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1)) * R;
+    	double dLat = Math.toRadians(lat2-lat1);
+    	double dLon = Math.toRadians(lon2-lon1);
+    	
+    	lat1 = Math.toRadians(lat1);
+    	lat2 = Math.toRadians(lat2);
+
+    	double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    	        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+    	double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    	double d = R * c;
     	
     	return d;
     }
@@ -163,13 +173,10 @@ public class main extends MapActivity {
     
     public void searchLocation(View v) {
     	EditText location = (EditText)this.findViewById(R.id.location);
-    	//TextView result = (TextView)this.findViewById(R.id.result);
-    	
-    	String sLocation = location.getText().toString();
     	
     	Geocoder g = new Geocoder(this);
     	try {
-			this.addresses = g.getFromLocationName(sLocation, 5);
+			this.addresses = g.getFromLocationName(location.getText().toString(), 5);
 			
 			if (this.addresses.size() == 1) {
 				showAddress(this.addresses.get(0));

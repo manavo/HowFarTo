@@ -201,22 +201,27 @@ public class main extends MapActivity {
     }
     
     public void searchLocation(View v) {
-    	EditText location = (EditText)this.findViewById(R.id.location);
+    	EditText locationText = (EditText)this.findViewById(R.id.location);
+    	String location = locationText.getText().toString();
     	
-    	this.lookup = new LocationLookup(this);
-    	
-		this.dialog = new ProgressDialog(this);
-		this.dialog.setMessage("Finding the location...");
-		this.dialog.setCancelable(true);
-		this.dialog.setOnCancelListener(new OnCancelListener() {
-			public void onCancel(DialogInterface arg0) {
-				main.this.lookup.cancel(true);
-			}
-		});
-		this.dialog.show();
-		
-
-    	this.lookup.execute(location.getText().toString());
+    	if (location.length() > 0) {
+	    	this.lookup = new LocationLookup(this);
+	    	
+			this.dialog = new ProgressDialog(this);
+			this.dialog.setMessage("Finding the location...");
+			this.dialog.setCancelable(true);
+			this.dialog.setOnCancelListener(new OnCancelListener() {
+				public void onCancel(DialogInterface arg0) {
+					main.this.lookup.cancel(true);
+					Toast.makeText(main.this, "Cancelled", Toast.LENGTH_SHORT).show();
+				}
+			});
+			this.dialog.show();
+	
+	    	this.lookup.execute(location);
+    	} else {
+    		Toast.makeText(this, "Please enter a location", Toast.LENGTH_LONG).show();
+    	}
     }
     
     public void searchLocationCallback(List<Address> addresses) {

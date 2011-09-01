@@ -26,6 +26,10 @@ public class hftOverlay extends ItemizedOverlay<OverlayItem> {
 		this.mOverlays.clear();
 	}
 	
+	public ArrayList<OverlayItem> getItems() {
+		return this.mOverlays;
+	}
+	
 	@Override
 	protected boolean onTap(int index) {
 		OverlayItem item = mOverlays.get(index);

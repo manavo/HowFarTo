@@ -170,6 +170,7 @@ public class main extends MapActivity {
         
 		this.mapView.invalidate();
 		
+		this.showAllOverlays();
 		this.showDistance();
     }
     
@@ -250,5 +251,36 @@ public class main extends MapActivity {
 			});
 			dialog.show();
 		}
+    }
+    
+    // Code based on http://stackoverflow.com/questions/5241487/android-mapview-setting-zoom-automatically-until-all-itemizedoverlays-are-visib
+    // Adjusted to take into account the my location overlay as well
+    private void showAllOverlays() {
+    	int minLat = Integer.MAX_VALUE;
+    	int maxLat = Integer.MIN_VALUE;
+    	int minLon = Integer.MAX_VALUE;
+    	int maxLon = Integer.MIN_VALUE;
+    	
+    	GeoPoint p;
+    	
+    	for (OverlayItem item : this.itemizedoverlay.getItems()) {
+    		p = item.getPoint();
+    		
+    		int lat = p.getLatitudeE6();
+    		int lon = p.getLongitudeE6();
+
+    		maxLat = Math.max(lat, maxLat);
+    		minLat = Math.min(lat, minLat);
+    		maxLon = Math.max(lon, maxLon);
+    		minLon = Math.min(lon, minLon);
+    	}
+
+		maxLat = Math.max(this.myLocationOverlay.getMyLocation().getLatitudeE6(), maxLat);
+		minLat = Math.min(this.myLocationOverlay.getMyLocation().getLatitudeE6(), minLat);
+		maxLon = Math.max(this.myLocationOverlay.getMyLocation().getLongitudeE6(), maxLon);
+		minLon = Math.min(this.myLocationOverlay.getMyLocation().getLongitudeE6(), minLon);
+		
+    	this.mapView.getController().zoomToSpan(Math.abs(maxLat - minLat), Math.abs(maxLon - minLon));
+    	this.mapView.getController().animateTo(new GeoPoint( (maxLat + minLat)/2, (maxLon + minLon)/2 )); 
     }
 }

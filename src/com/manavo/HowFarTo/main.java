@@ -63,9 +63,6 @@ public class main extends MapActivity {
         Drawable drawable = this.getResources().getDrawable(R.drawable.marker);
         this.itemizedoverlay = new hftOverlay(drawable, this);
         
-
-
-
         this.hRefresh = new Handler(){
 	        @Override
 	        public void handleMessage(Message msg) {
@@ -73,7 +70,6 @@ public class main extends MapActivity {
 				main.this.showDistance();
 	        }
         };
-
         
         this.myLocationOverlay = new FixedMyLocationOverlay(this, this.mapView);
 		this.myLocationOverlay.enableMyLocation();
@@ -170,7 +166,6 @@ public class main extends MapActivity {
         
 		this.mapView.invalidate();
 		
-		this.showAllOverlays();
 		this.showDistance();
     }
     
@@ -194,6 +189,8 @@ public class main extends MapActivity {
         	locationText += " to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode();
         	this.distance.setText(locationText); 
         	this.distance.setVisibility(View.VISIBLE);
+        	
+    		this.showAllOverlays();
     	}
     }
     
@@ -223,6 +220,10 @@ public class main extends MapActivity {
     	} else {
     		Toast.makeText(this, "Please enter a location", Toast.LENGTH_LONG).show();
     	}
+    }
+    
+    public void searchLocationError(String error) {
+    	Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
     
     public void searchLocationCallback(List<Address> addresses) {

@@ -1,17 +1,17 @@
 package com.manavo.HowFarTo;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
-import android.location.Geocoder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -44,6 +44,9 @@ public class main extends MapActivity {
 	private GeoPoint locationPoint;
 	
 	private Handler hRefresh;
+	
+	private LocationLookup lookup;
+	private ProgressDialog dialog;
 	
     /** Called when the activity is first created. */
     @Override
@@ -193,40 +196,54 @@ public class main extends MapActivity {
     	}
     }
     
+    public void hideDialog() {
+    	this.dialog.hide();
+    }
+    
     public void searchLocation(View v) {
     	EditText location = (EditText)this.findViewById(R.id.location);
     	
-    	Geocoder g = new Geocoder(this);
-    	try {
-			this.addresses = g.getFromLocationName(location.getText().toString(), 5);
-			
-			if (this.addresses.size() == 1) {
-				showAddress(this.addresses.get(0));
-			} else if (this.addresses.size() == 0) {
-				Toast.makeText(this, "Nothing found!", Toast.LENGTH_LONG).show();
-			} else {
-				Iterator<Address> i = this.addresses.iterator();
-				Address a;
-				
-				ArrayList<String> options = new ArrayList<String>();
-				while (i.hasNext()) {
-					a = i.next();
-					options.add(a.getAddressLine(0) + ", " + a.getCountryName());
-				}
-				CharSequence[] cs = options.toArray(new CharSequence[options.size()]);
-
-				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-				dialog.setItems(cs, new OnClickListener() {
-					public void onClick(DialogInterface arg0, int index) {
-						showAddress(main.this.addresses.get(index));
-					}
-				});
-				dialog.show();
+    	this.lookup = new LocationLookup(this);
+    	
+		this.dialog = new ProgressDialog(this);
+		this.dialog.setMessage("Finding the location...");
+		this.dialog.setCancelable(true);
+		this.dialog.setOnCancelListener(new OnCancelListener() {
+			public void onCancel(DialogInterface arg0) {
+				main.this.lookup.cancel(true);
 			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-	    	Toast.makeText(this, "Could not connect. Please try again!", Toast.LENGTH_SHORT).show();
+		});
+		this.dialog.show();
+		
+
+    	this.lookup.execute(location.getText().toString());
+    }
+    
+    public void searchLocationCallback(List<Address> addresses) {
+    	this.addresses = addresses;
+    	
+		if (this.addresses.size() == 1) {
+			showAddress(this.addresses.get(0));
+		} else if (this.addresses.size() == 0) {
+			Toast.makeText(this, "Nothing found!", Toast.LENGTH_LONG).show();
+		} else {
+			Iterator<Address> i = this.addresses.iterator();
+			Address a;
+			
+			ArrayList<String> options = new ArrayList<String>();
+			while (i.hasNext()) {
+				a = i.next();
+				options.add(a.getAddressLine(0) + ", " + a.getCountryName());
+			}
+			CharSequence[] cs = options.toArray(new CharSequence[options.size()]);
+
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setItems(cs, new OnClickListener() {
+				public void onClick(DialogInterface arg0, int index) {
+					showAddress(main.this.addresses.get(index));
+				}
+			});
+			dialog.show();
 		}
     }
 }

@@ -157,7 +157,7 @@ public class main extends MapActivity {
         this.addMyLocation();
         
         this.locationPoint = new GeoPoint(lat, lng);
-        OverlayItem overlayitem = new OverlayItem(this.locationPoint, "Hello!", "I'm in "+address.getAddressLine(0)+"!");
+        OverlayItem overlayitem = new OverlayItem(this.locationPoint, "Hello from", address.getAddressLine(0)+", "+address.getCountryCode());
         
         this.itemizedoverlay.clear();
         this.itemizedoverlay.addOverlay(overlayitem);

@@ -7,6 +7,6 @@
 	<TextView
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:text="App Icon Image: digitalart / FreeDigitalPhotos.net"
+		android:text="App Icon Image: Iconshock (http://www.iconarchive.com/show/super-vista-general-icons-by-iconshock/world-icon.html)"
 		/>
 </LinearLayout>

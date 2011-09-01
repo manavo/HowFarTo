@@ -13,7 +13,6 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -25,7 +24,6 @@ import android.widget.Toast;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapView;
-import com.google.android.maps.MyLocationOverlay;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 
@@ -38,7 +36,7 @@ public class main extends MapActivity {
 	
 	private List<Address> addresses;
 	
-	private MyLocationOverlay myLocationOverlay;
+	private FixedMyLocationOverlay myLocationOverlay;
 	
 	private Address location;
 	private GeoPoint locationPoint;
@@ -58,7 +56,7 @@ public class main extends MapActivity {
         Drawable drawable = this.getResources().getDrawable(R.drawable.marker);
         this.itemizedoverlay = new hftOverlay(drawable, this);
         
-        this.myLocationOverlay = new MyLocationOverlay(this, this.mapView);
+        this.myLocationOverlay = new FixedMyLocationOverlay(this, this.mapView);
 		this.myLocationOverlay.enableMyLocation();
 		this.myLocationOverlay.runOnFirstFix(new Runnable() {
 			public void run() {
@@ -123,8 +121,7 @@ public class main extends MapActivity {
     	lat1 = Math.toRadians(lat1);
     	lat2 = Math.toRadians(lat2);
 
-    	double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    	        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+    	double a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
     	double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
     	double d = R * c;
     	
@@ -166,7 +163,17 @@ public class main extends MapActivity {
     		// Do nothing, we got our location but haven't searched for anything yet
     	} else {
         	Double distance = this.calculateDistance(myLocation, this.locationPoint);
-        	this.distance.setText("About " + new Integer(Math.round(Math.round(distance))).toString() + "km to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode()); 
+        	String locationText = "About " + new Integer(Math.round(Math.round(distance))).toString() + "km";
+        	float accuracy = this.myLocationOverlay.getLastFix().getAccuracy();
+        	if (accuracy != 0.0f) {
+        		if (accuracy < 1000f) {
+        			locationText += "(± " + accuracy + "m)";
+        		} else {
+        			locationText += "(± " + Math.round(accuracy/1000) + "km)";
+        		}
+        	}
+        	locationText += "to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode();
+        	this.distance.setText(locationText); 
         	this.distance.setVisibility(View.VISIBLE);
     	}
     }

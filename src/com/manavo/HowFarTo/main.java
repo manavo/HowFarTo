@@ -13,6 +13,8 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -41,6 +43,8 @@ public class main extends MapActivity {
 	private Address location;
 	private GeoPoint locationPoint;
 	
+	private Handler hRefresh;
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,12 +60,23 @@ public class main extends MapActivity {
         Drawable drawable = this.getResources().getDrawable(R.drawable.marker);
         this.itemizedoverlay = new hftOverlay(drawable, this);
         
+
+
+
+        this.hRefresh = new Handler(){
+	        @Override
+	        public void handleMessage(Message msg) {
+				main.this.mapView.getController().animateTo(main.this.myLocationOverlay.getMyLocation());
+				main.this.showDistance();
+	        }
+        };
+
+        
         this.myLocationOverlay = new FixedMyLocationOverlay(this, this.mapView);
 		this.myLocationOverlay.enableMyLocation();
 		this.myLocationOverlay.runOnFirstFix(new Runnable() {
 			public void run() {
-				main.this.showDistance();
-				main.this.mapView.getController().animateTo(main.this.myLocationOverlay.getMyLocation());
+				main.this.hRefresh.sendEmptyMessage(0);
 			}
 		});
 		
@@ -172,7 +187,7 @@ public class main extends MapActivity {
         			locationText += "(± " + Math.round(accuracy/1000) + "km)";
         		}
         	}
-        	locationText += "to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode();
+        	locationText += " to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode();
         	this.distance.setText(locationText); 
         	this.distance.setVisibility(View.VISIBLE);
     	}

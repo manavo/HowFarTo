@@ -1,5 +1,6 @@
 package com.manavo.HowFarTo;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -8,6 +9,7 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
@@ -15,6 +17,7 @@ import android.location.Address;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -112,6 +115,9 @@ public class main extends MapActivity {
         case R.id.about:
             this.startActivity(new Intent(this, About.class));
             return true;
+        case R.id.settings:
+        	this.startActivity(new Intent(this, Settings.class));
+        	return true;
         case R.id.exit:
             this.finish();
             return true;
@@ -176,16 +182,36 @@ public class main extends MapActivity {
     	} else if (this.location == null) {
     		// Do nothing, we got our location but haven't searched for anything yet
     	} else {
-        	Double distance = this.calculateDistance(myLocation, this.locationPoint);
-        	String locationText = "About " + new Integer(Math.round(Math.round(distance))).toString() + "km";
+    	    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+	    	String showDistanceIn = sp.getString("distanceIn", "km");
+	    	
+	    	Double distance = this.calculateDistance(myLocation, this.locationPoint);
+	    	if (showDistanceIn.equals("km") == false) {
+	    		// km to miles
+	    		distance *= 0.621371192d;
+	    	}
+	    	
+        	String locationText = "About " + main.round(distance, 1) + showDistanceIn;
+	    	
         	float accuracy = this.myLocationOverlay.getLastFix().getAccuracy();
-        	if (accuracy != 0.0f) {
-        		if (accuracy < 1000f) {
-        			locationText += "(± " + accuracy + "m)";
-        		} else {
-        			locationText += "(± " + Math.round(accuracy/1000) + "km)";
-        		}
+        	
+        	if (accuracy > 0) {
+    	    	if (showDistanceIn.equals("km") == true) {
+	        		if (accuracy < 500f) {
+	        			locationText += "(± " + accuracy + "m)";
+	        		} else {
+	        			locationText += "(± " + main.round(accuracy/1000, 2) + "km)";
+	        		}
+    	    	} else {
+    	    		double accuracyInMiles = (accuracy * 0.000621371192d); // meters to miles
+    	    		if (accuracyInMiles > 0.3f) {
+    	    			locationText += "(± " + main.round(accuracyInMiles, 2) + "mi)";
+    	    		} else {
+    	    			locationText += "(± " + main.round(accuracyInMiles * 5280, 2) + "ft)";
+    	    		}
+    	    	}
         	}
+	    	
         	locationText += " to " + this.location.getAddressLine(0) + ", " + this.location.getCountryCode();
         	this.distance.setText(locationText); 
         	this.distance.setVisibility(View.VISIBLE);
@@ -284,4 +310,12 @@ public class main extends MapActivity {
     	this.mapView.getController().zoomToSpan(Math.abs(maxLat - minLat), Math.abs(maxLon - minLon));
     	this.mapView.getController().animateTo(new GeoPoint( (maxLat + minLat)/2, (maxLon + minLon)/2 )); 
     }
+    
+    // function from http://stackoverflow.com/questions/3596023/round-to-2-decimal-places
+    public static double round(double unrounded, int precision) {
+        BigDecimal bd = new BigDecimal(unrounded);
+        BigDecimal rounded = bd.setScale(precision, BigDecimal.ROUND_UP);
+        return rounded.doubleValue();
+    }
+
 }

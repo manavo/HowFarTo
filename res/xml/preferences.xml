@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <ListPreference android:entries="@array/distanceReadable" android:entryValues="@array/distanceValues" android:dialogTitle="@string/showDistanceIn" android:key="distanceIn" android:enabled="true" android:selectable="true" android:defaultValue="km" android:title="@string/showDistanceIn"/>
+
+    
+
+</PreferenceScreen>

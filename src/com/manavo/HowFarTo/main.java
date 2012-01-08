@@ -18,13 +18,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.TextView.OnEditorActionListener;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -35,6 +38,7 @@ import com.google.android.maps.OverlayItem;
 public class main extends MapActivity {
 	private MapView mapView;
 	private TextView distance;
+	private EditText locationText;
 	
 	private List<Overlay> mapOverlays;
 	private hftOverlay itemizedoverlay;
@@ -58,6 +62,17 @@ public class main extends MapActivity {
         setContentView(R.layout.main);
         
         this.distance = (TextView)this.findViewById(R.id.distance);
+        
+        this.locationText = (EditText)this.findViewById(R.id.location);
+        this.locationText.setOnEditorActionListener(new OnEditorActionListener() {
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    // do the search. no return false, since we want the default action to happen anyway (hide keyboard)
+                	main.this.searchLocation();
+                }
+                return false;
+            }
+        });
         
         this.mapView = (MapView)this.findViewById(R.id.mapview);
         this.mapView.setBuiltInZoomControls(true);
@@ -224,9 +239,13 @@ public class main extends MapActivity {
     	this.dialog.hide();
     }
     
+    // for when the button is clicked
     public void searchLocation(View v) {
-    	EditText locationText = (EditText)this.findViewById(R.id.location);
-    	String location = locationText.getText().toString();
+    	this.searchLocation();
+    }
+    
+    public void searchLocation() {
+    	String location = this.locationText.getText().toString();
     	
     	if (location.length() > 0) {
 	    	this.lookup = new LocationLookup(this);

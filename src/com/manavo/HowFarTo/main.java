@@ -7,6 +7,7 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,6 +25,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,8 +68,7 @@ public class main extends MapActivity {
         this.locationText = (EditText)this.findViewById(R.id.location);
         this.locationText.setOnEditorActionListener(new OnEditorActionListener() {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    // do the search. no return false, since we want the default action to happen anyway (hide keyboard)
+                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_NULL || (event != null && event.getAction() == KeyEvent.ACTION_UP && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 	main.this.searchLocation();
                 }
                 return false;
@@ -245,6 +246,9 @@ public class main extends MapActivity {
     }
     
     public void searchLocation() {
+    	InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+    	imm.hideSoftInputFromWindow(this.locationText.getWindowToken(), 0);
+    	
     	String location = this.locationText.getText().toString();
     	
     	if (location.length() > 0) {

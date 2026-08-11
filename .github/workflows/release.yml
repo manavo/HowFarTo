@@ -1,0 +1,55 @@
+# Manually-triggered release: builds a signed APK and uploads it to the
+# Play Store production track as a draft release.
+#
+# Required repository secrets:
+#   KEYSTORE_BASE64            base64-encoded release keystore (base64 -i keystore.jks)
+#   KEYSTORE_PASSWORD          keystore password
+#   KEY_ALIAS                  key alias
+#   KEY_PASSWORD               key password
+#   PLAY_SERVICE_ACCOUNT_JSON  full JSON key of the Google Play service account
+#   MAPS_API_KEY               Google Maps API key
+
+name: Release to Play Store
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/keystore.jks"
+
+      - name: Build release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: ./gradlew assembleRelease
+
+      - name: Upload to Play Store (production, draft)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.manavo.HowFarTo
+          releaseFiles: app/build/outputs/apk/release/app-release.apk
+          tracks: production
+          status: draft
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/app-release.apk

@@ -2,6 +2,17 @@ plugins {
     id "com.android.application"
 }
 
+// Maps API key comes from the MAPS_API_KEY env var (CI) or local.properties (local builds)
+def mapsApiKey = System.getenv("MAPS_API_KEY")
+if (mapsApiKey == null) {
+    def localProperties = new Properties()
+    def localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withInputStream { localProperties.load(it) }
+    }
+    mapsApiKey = localProperties.getProperty("MAPS_API_KEY", "")
+}
+
 android {
     namespace "com.manavo.HowFarTo"
     compileSdk 36
@@ -12,11 +23,26 @@ android {
         targetSdk 36
         versionCode 4
         versionName "1.2"
+        resValue "string", "maps_api_key", mapsApiKey
+    }
+
+    signingConfigs {
+        release {
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                storeFile file(System.getenv("KEYSTORE_FILE"))
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 

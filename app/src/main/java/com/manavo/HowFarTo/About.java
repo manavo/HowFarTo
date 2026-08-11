@@ -1,9 +1,10 @@
 package com.manavo.HowFarTo;
 
-import android.app.Activity;
 import android.os.Bundle;
 
-public class About extends Activity {
+import androidx.appcompat.app.AppCompatActivity;
+
+public class About extends AppCompatActivity {
 
     /** Called when the activity is first created. */
     @Override

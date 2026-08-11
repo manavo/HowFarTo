@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     >
-	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	<LinearLayout
 	    android:orientation="horizontal"
-	    android:layout_width="fill_parent"
+	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    >
 	    <EditText
@@ -23,18 +24,17 @@
 		    />
 	</LinearLayout>
 	<TextView
-		    android:layout_width="fill_parent" 
+		    android:layout_width="match_parent" 
 		    android:layout_height="wrap_content"
 		    android:id="@+id/distance"
 		    android:visibility="gone"
 			/>		
-	<com.google.android.maps.MapView
+	<fragment
 	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:name="com.google.android.gms.maps.SupportMapFragment"
 	    android:id="@+id/mapview"
 	    android:layout_weight="1"
-	    android:layout_width="fill_parent"
-	    android:layout_height="fill_parent"
-	    android:clickable="true"
-	    android:apiKey="@string/maps_api_key"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
 	/>
 </LinearLayout>

@@ -1,0 +1,34 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.manavo.HowFarTo"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.manavo.HowFarTo"
+        minSdk 23
+        targetSdk 36
+        versionCode 4
+        versionName "1.2"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.7.1"
+    implementation "androidx.preference:preference:1.2.1"
+    implementation "com.google.android.gms:play-services-maps:20.0.0"
+    implementation "com.google.android.gms:play-services-location:21.4.0"
+}

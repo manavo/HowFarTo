@@ -2,10 +2,11 @@
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:orientation="vertical"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent">
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:fitsSystemWindows="true">
 	<TextView
-		android:layout_width="fill_parent"
+		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:text="App Icon Image from: http://freepsdfiles.net/graphics/4-free-globe-icons/\n\nEdited by kas!a to add the arrow"
 		/>

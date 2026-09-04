@@ -164,6 +164,17 @@ public class main extends AppCompatActivity implements OnMapReadyCallback {
         this.fusedLocationClient.removeLocationUpdates(this.locationCallback);
     }
 
+    @Override
+    protected void onDestroy() {
+        if (this.lookup != null) {
+            this.lookup.cancel();
+        }
+        if (this.dialog != null) {
+            this.dialog.dismiss();
+        }
+        super.onDestroy();
+    }
+
     private void onFirstFix() {
         if (this.map != null && !this.zoomedToFirstFix) {
             this.zoomedToFirstFix = true;
@@ -279,7 +290,9 @@ public class main extends AppCompatActivity implements OnMapReadyCallback {
     }
 
     public void hideDialog() {
-        this.dialog.hide();
+        if (this.dialog != null && this.dialog.isShowing()) {
+            this.dialog.dismiss();
+        }
     }
 
     // for when the button is clicked

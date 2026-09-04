@@ -1,6 +1,7 @@
 package com.manavo.HowFarTo;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,12 +16,14 @@ public class LocationLookup {
 
     private static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
-    private final main activity;
+    private final WeakReference<main> activity;
+    private final Geocoder geocoder;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
     public LocationLookup(main activity) {
-        this.activity = activity;
+        this.activity = new WeakReference<>(activity);
+        this.geocoder = new Geocoder(activity.getApplicationContext());
     }
 
     public void cancel() {
@@ -32,9 +35,8 @@ public class LocationLookup {
             List<Address> addresses = null;
             String error = null;
 
-            Geocoder g = new Geocoder(this.activity);
             try {
-                addresses = g.getFromLocationName(location.trim(), 5);
+                addresses = this.geocoder.getFromLocationName(location.trim(), 5);
             } catch (IOException e) {
                 error = "Could not connect. Please try again!";
             } catch (Exception e) {
@@ -44,15 +46,16 @@ public class LocationLookup {
             final List<Address> result = addresses;
             final String resultError = error;
             this.mainHandler.post(() -> {
-                if (this.cancelled.get()) {
+                main currentActivity = this.activity.get();
+                if (this.cancelled.get() || currentActivity == null || currentActivity.isDestroyed()) {
                     return;
                 }
                 if (result != null) {
-                    this.activity.searchLocationCallback(result);
+                    currentActivity.searchLocationCallback(result);
                 } else if (resultError != null) {
-                    this.activity.searchLocationError(resultError);
+                    currentActivity.searchLocationError(resultError);
                 }
-                this.activity.hideDialog();
+                currentActivity.hideDialog();
             });
         });
     }

@@ -30,5 +30,8 @@ local.properties
 .idea/
 *.iml
 
+# Amp orb portal metadata
+.amp/portals/*
+
 # ignore file with keys
 app/src/main/res/values/keys.xml

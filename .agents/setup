@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+started_at=$SECONDS
+log() {
+    printf '[setup] %s\n' "$*"
+}
+
+log "Checking system packages"
+step_started_at=$SECONDS
+packages=(ca-certificates curl openjdk-17-jdk-headless unzip)
+missing_packages=()
+for package in "${packages[@]}"; do
+    if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -Fq 'install ok installed'; then
+        missing_packages+=("$package")
+    fi
+done
+
+if ((${#missing_packages[@]})); then
+    if ((EUID == 0)); then
+        apt-get update
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing_packages[@]}"
+    else
+        sudo apt-get update
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing_packages[@]}"
+    fi
+fi
+log "System packages ready in $((SECONDS - step_started_at))s"
+
+export JAVA_HOME
+JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")"
+export ANDROID_HOME="$HOME/.android/sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+log "Checking Android command-line tools"
+step_started_at=$SECONDS
+sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+if [[ ! -x "$sdkmanager" ]]; then
+    command_line_tools_url="https://dl.google.com/android/repository/commandlinetools-linux-15859902_latest.zip"
+    command_line_tools_sha256="4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583"
+    archive="$(mktemp)"
+    extract_dir="$(mktemp -d)"
+    cleanup() {
+        rm -f -- "$archive"
+        rm -rf -- "$extract_dir"
+    }
+    trap cleanup EXIT
+
+    log "Downloading Android command-line tools"
+    curl --fail --location --retry 3 --silent --show-error \
+        "$command_line_tools_url" --output "$archive"
+    printf '%s  %s\n' "$command_line_tools_sha256" "$archive" | sha256sum --check --status
+    unzip -q "$archive" -d "$extract_dir"
+    mkdir -p "$ANDROID_HOME/cmdline-tools"
+    rm -rf -- "$ANDROID_HOME/cmdline-tools/latest"
+    mv "$extract_dir/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+    cleanup
+    trap - EXIT
+fi
+log "Android command-line tools ready in $((SECONDS - step_started_at))s"
+
+log "Checking Android SDK packages"
+step_started_at=$SECONDS
+sdk_packages=()
+[[ -x "$ANDROID_HOME/platform-tools/adb" ]] || sdk_packages+=("platform-tools")
+[[ -f "$ANDROID_HOME/platforms/android-36/android.jar" ]] || sdk_packages+=("platforms;android-36")
+[[ -x "$ANDROID_HOME/build-tools/36.0.0/aapt2" ]] || sdk_packages+=("build-tools;36.0.0")
+
+if ((${#sdk_packages[@]})); then
+    set +o pipefail
+    yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+    license_status=${PIPESTATUS[1]}
+    set -o pipefail
+    if ((license_status != 0)); then
+        log "Android SDK license acceptance failed"
+        exit "$license_status"
+    fi
+    "$sdkmanager" --sdk_root="$ANDROID_HOME" "${sdk_packages[@]}"
+fi
+log "Android SDK packages ready in $((SECONDS - step_started_at))s"
+
+profile_marker="# HowFarTo Android development environment"
+if ! grep -Fqx "$profile_marker" "$HOME/.bash_profile" 2>/dev/null; then
+    cat >> "$HOME/.bash_profile" <<'EOF'
+
+# HowFarTo Android development environment
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export ANDROID_HOME="$HOME/.android/sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+EOF
+fi
+
+if [[ ! -f local.properties ]]; then
+    printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
+fi
+
+log "Resolving Gradle dependencies and building the debug APK"
+step_started_at=$SECONDS
+./gradlew --no-daemon --console=plain :app:assembleDebug
+log "Gradle build ready in $((SECONDS - step_started_at))s"
+
+log "Setup complete in $((SECONDS - started_at))s"
